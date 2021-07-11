@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Web Socket Demo</title>
+</head>
+<body>
+</body>
+<script>
+    const ws = new WebSocket(`ws://${location.host}/ws`)
+    ws.addEventListener('open', () => {
+        console.info('WebSocket connection is opened')
+        ws.send('aa')
+    })
+    ws.addEventListener('message', (message) => {
+        console.log(message.data)
+    })
+</script>
+</html>
