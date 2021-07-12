@@ -4,18 +4,25 @@ import { promises as fsp } from "fs";
 
 const PORT = 3000;
 
-const wss = new WebSocket.Server({ noServer: true });
+const wsChat = new WebSocket.Server({ noServer: true });
+const wsCounter = new WebSocket.Server({ noServer: true });
 
-wss.on("connection", (ws) => {
-  ws.on("message", (message) => {
-    wss.clients.forEach((client) => {
+wsChat.on("connection", (ws) => {
+  ws.on("message", (data) => {
+    wsChat.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
-        client.send(message);
+        client.send(data);
       }
     });
   });
+});
 
-  ws.send("foo");
+wsCounter.on("connection", (ws) => {
+  wsCounter.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(wsCounter.clients.size);
+    }
+  });
 });
 
 const server = http.createServer(async (req, res) => {
@@ -25,9 +32,15 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.on("upgrade", (req, socket, head) => {
-  wss.handleUpgrade(req, socket, head, (ws) => {
-    wss.emit("connection", ws, req);
-  });
+  if (req.url === "/ws") {
+    wsChat.handleUpgrade(req, socket, head, (ws) => {
+      wsChat.emit("connection", ws, req);
+    });
+  } else if (req.url === "/connection") {
+    wsCounter.handleUpgrade(req, socket, head, (ws) => {
+      wsCounter.emit("connection", ws, req);
+    });
+  }
 });
 
 server.listen(PORT, () => {
