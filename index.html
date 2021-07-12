@@ -2,18 +2,165 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Web Socket Demo</title>
 </head>
-<body>
+<body class="content">
+    <div class="heading-area">
+        <h1 class="heading">Simple Chat</h1>
+        <span class="connections">Connections: <connection-counter>0</connection-counter></span>
+    </div>
+    <main class="chat-area">
+        <chat-messages class="chat-messages"></chat-messages>
+        <div class="form-area">
+            <form class="form" is="message-form">
+                <input type="text" class="input" id="message-text" placeholder="Message" />
+                <button type="submit" class="submit-button">Send</button>
+            </form>
+        </div>
+    </main>
 </body>
+<template id="message">
+<style>
+.article {
+    padding: 16px;
+    border: 1px solid #afafaf;
+    border-radius: 5px;
+    background: white;
+}
+.message{
+    font-size: 14px;
+    line-height: 1.5;
+}
+</style>
+    <article class="article">
+        <span class="message"><slot name="message-text">Message</slot></span>
+    </article>
+</template>
+<style>
+:root {
+    --max-content-size: 600px;
+    --fixed-content-height: 186px;
+}
+.content {
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    margin: 0;
+}
+.heading-area {
+    display: flex;
+    flex-flow: column nowrap;
+    align-items: flex-start;
+    width: 100%;
+    position: sticky;
+    top: 0;
+    background: white;
+    margin-bottom: 16px;
+}
+.heading {
+    font-weight: bold;
+}
+.connections: {
+    font-size: 14px;
+}
+.chat-area {
+    max-width: var(--max-content-size);
+    width: 100%;
+    display: flex;
+    flex-flow: column nowrap;
+    margin: 0 8px;
+}
+.chat-messages {
+    display: flex;
+    flex-flow: column;
+    gap: 8px;
+    height: calc(100vh - var(--fixed-content-height));
+    overflow-y: scroll;
+}
+.chat-messages::-webkit-scrollbar {
+    display: none;
+}
+.form-area {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    max-width: var(--max-content-size);
+    padding: 16px 0;
+    background: white;
+}
+.form {
+    display: flex;
+    gap: 8px;
+}
+.input {
+    padding: 16px;
+    border: none;
+    border-bottom: 1px solid #afafaf;
+    flex: 1 0;
+}
+.submit-button {
+    padding: 8px 16px;
+    border: none;
+    cursor: pointer;
+    flex: 0 0;
+}
+</style>
 <script>
+
+    class ConnectionCounter extends HTMLElement {
+        connectedCallback() {
+            const ws = new WebSocket(`ws://${location.host}/connection`);
+            ws.addEventListener('message', ({ data }) => {
+                this.textContent = data;
+            });
+        }
+    }
+
+    class ChatMessage extends HTMLElement {
+        connectedCallback() {
+            const template = document.querySelector('#message');
+            this.attachShadow({ mode: 'open' })
+                .appendChild(template.content.cloneNode(true))
+        }
+    }
+
     const ws = new WebSocket(`ws://${location.host}/ws`)
     ws.addEventListener('open', () => {
         console.info('WebSocket connection is opened')
-        ws.send('aa')
     })
-    ws.addEventListener('message', (message) => {
-        console.log(message.data)
-    })
+
+    class ChatMessages extends HTMLElement {
+        connectedCallback() {
+
+            ws.addEventListener('message', (message) => {
+                const article = document.createElement('chat-message')
+                const div = document.createElement('div')
+                div.slot = 'message-text';
+                div.textContent = message.data;
+                article.appendChild(div)
+                this.insertAdjacentElement('beforeend', article);
+            })
+        }
+    }
+    
+    class MessageForm extends HTMLFormElement {
+        connectedCallback() {
+            const messageText = this.querySelector('#message-text');
+
+            this.addEventListener('submit', (e) => {
+                e.preventDefault()
+                if (!messageText.value) {
+                    return;
+                }
+                ws.send(messageText.value)
+                messageText.value = ''
+            })
+        }
+    }
+    customElements.define('connection-counter', ConnectionCounter)
+    customElements.define('chat-message', ChatMessage)
+    customElements.define('chat-messages', ChatMessages)
+    customElements.define('message-form', MessageForm, { extends: 'form' })
 </script>
 </html>
