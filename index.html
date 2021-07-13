@@ -12,12 +12,12 @@
     </div>
     <main class="chat-area">
         <chat-messages class="chat-messages"></chat-messages>
-        <div class="form-area">
-            <form class="form" is="message-form">
+        <message-form class="form-area">
+            <form class="form" id="message-form" aria-label="Send message" name="Send message">
                 <input type="text" class="input" id="message-text" placeholder="Message" />
                 <button type="submit" class="submit-button">Send</button>
             </form>
-        </div>
+        </message-form>
     </main>
 </body>
 <template id="message">
@@ -125,14 +125,14 @@
         }
     }
 
-    const ws = new WebSocket(`ws://${location.host}/ws`)
-    ws.addEventListener('open', () => {
-        console.info('WebSocket connection is opened')
-    })
-
     class ChatMessages extends HTMLElement {
-        connectedCallback() {
 
+        get form() {
+            return document.querySelector('#message-form')
+        }
+
+        connectedCallback() {
+            const ws = new WebSocket(`ws://${location.host}/ws`)
             ws.addEventListener('message', (message) => {
                 const article = document.createElement('chat-message')
                 const div = document.createElement('div')
@@ -141,19 +141,33 @@
                 article.appendChild(div)
                 this.insertAdjacentElement('beforeend', article);
             })
+
+            this.form.addEventListener('send-message', ({ detail }) => {
+                const { message } = detail
+                ws.send(message)
+            })
         }
     }
     
-    class MessageForm extends HTMLFormElement {
+    class MessageForm extends HTMLElement {
+
+        get form() {
+            return this.querySelector('#message-form')
+        }
+
         connectedCallback() {
             const messageText = this.querySelector('#message-text');
 
-            this.addEventListener('submit', (e) => {
+            this.form.addEventListener('submit', (e) => {
                 e.preventDefault()
                 if (!messageText.value) {
                     return;
                 }
-                ws.send(messageText.value)
+                this.form.dispatchEvent(new CustomEvent('send-message', {
+                    detail: {
+                        message: messageText.value,
+                    }
+                }))
                 messageText.value = ''
             })
         }
@@ -161,6 +175,6 @@
     customElements.define('connection-counter', ConnectionCounter)
     customElements.define('chat-message', ChatMessage)
     customElements.define('chat-messages', ChatMessages)
-    customElements.define('message-form', MessageForm, { extends: 'form' })
+    customElements.define('message-form', MessageForm)
 </script>
 </html>
