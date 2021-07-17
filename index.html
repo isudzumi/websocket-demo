@@ -110,7 +110,7 @@
 
     class ConnectionCounter extends HTMLElement {
         connectedCallback() {
-            const ws = new WebSocket(`ws://${location.host}/connection`);
+            const ws = new WebSocket(`wss://${location.host}/connection`);
             ws.addEventListener('message', ({ data }) => {
                 this.textContent = data;
             });
@@ -132,7 +132,7 @@
         }
 
         connectedCallback() {
-            const ws = new WebSocket(`ws://${location.host}/ws`)
+            const ws = new WebSocket(`wss://${location.host}/ws`)
             ws.addEventListener('message', (message) => {
                 const article = document.createElement('chat-message')
                 const div = document.createElement('div')
