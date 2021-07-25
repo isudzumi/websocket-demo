@@ -1,4 +1,4 @@
-# Web Socket demo app
+# WebSocket over HTTP2 demo app
 
 Simple chat app
 
