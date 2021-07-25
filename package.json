@@ -9,8 +9,5 @@
   },
   "engines": {
     "node": "14.x"
-  },
-  "dependencies": {
-    "ws": "^7.5.3"
   }
 }
