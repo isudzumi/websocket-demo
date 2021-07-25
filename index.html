@@ -142,6 +142,14 @@
                 this.insertAdjacentElement('beforeend', article);
             })
 
+            ws.addEventListener('close', (e) => {
+                console.info(`WebSocket is closed. error code is ${e.code}.`)
+            })
+
+            ws.addEventListener('error', (e) => {
+                console.error(e)
+            })
+
             this.form.addEventListener('send-message', ({ detail }) => {
                 const { message } = detail
                 ws.send(message)
